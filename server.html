@@ -14,6 +14,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .chat-container {
       background-color: rgba(255, 255, 255, 0.9);
@@ -21,17 +22,58 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       padding: 30px;
       width: 700px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
     }
-    .message { padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+    #messages {
+      flex: 1;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .message { 
+      padding: 10px; 
+      border-radius: 10px; 
+      margin-bottom: 10px; 
+      word-wrap: break-word;
+    }
     .server-message { background-color: #007bff; color: white; }
     .client-message { background-color: #f1f1f1; color: black; }
+    .error-message { background-color: #dc3545; color: white; }
+    .file-message { background-color: #28a745; color: white; }
+    
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
     #serverMessageInput {
-      width: calc(100% - 30px);
+      width: 100%;
       padding: 10px;
       border: 2px solid #007bff;
       border-radius: 10px;
       font-size: 16px;
+      box-sizing: border-box;
     }
+    
+    .file-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    #fileInput {
+      flex: 1;
+      padding: 8px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+    }
+    
     button {
       background-color: #007bff;
       color: white;
@@ -40,54 +82,193 @@
       border-radius: 10px;
       cursor: pointer;
       font-size: 16px;
-      margin-top: 10px;
     }
     button:hover { background-color: #0056b3; }
+    button:disabled { background-color: #6c757d; cursor: not-allowed; }
+    
+    .connection-status {
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .connected { background-color: #d4edda; color: #155724; }
+    .disconnected { background-color: #f8d7da; color: #721c24; }
   </style>
 </head>
 <body>
 
-  <div class="chat-container">
-    <h2>Server Chat</h2>
-    <div id="messages"></div>
+<div class="chat-container">
+  <h2>Server Chat</h2>
+  <div id="connectionStatus" class="connection-status disconnected">Connecting...</div>
+  <div id="messages"></div>
+  
+  <div class="input-section">
     <input type="text" id="serverMessageInput" placeholder="Type message...">
-    <button onclick="sendServerMessage()">Send</button>
-    <input type="file" id="fileInput">
+    <button onclick="sendServerMessage()" id="sendButton" disabled>Send</button>
+    
+    <div class="file-section">
+      <input type="file" id="fileInput" accept="*/*">
+      <button onclick="sendFile()" id="sendFileButton" disabled>Send File</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    const socket = new WebSocket('ws://localhost:4000');
+<script>
+  let socket;
+  let isConnected = false;
 
-    function sendServerMessage() {
-      const input = document.getElementById('serverMessageInput');
-      const message = input.value.trim();
-      if (message) {
-        socket.send(message);
-        displayMessage(`Server: ${message}`, 'server-message');
-        input.value = '';
-      }
-    }
+  function connectWebSocket() {
+    socket = new WebSocket('ws://localhost:4000');
+    
+    socket.onopen = function() {
+      isConnected = true;
+      updateConnectionStatus(true);
+      enableButtons(true);
+    };
 
-    function displayMessage(text, className) {
-      const messages = document.getElementById('messages');
-      const msgElement = document.createElement('div');
-      msgElement.classList.add('message', className);
-      msgElement.textContent = text;
-      messages.appendChild(msgElement);
-    }
-
-    // Handle incoming messages
     socket.onmessage = function(event) {
       const message = event.data;
+      console.log('Server received message:', message); // Debug log
+      
       if (message.startsWith("message:")) {
         displayMessage(`Client: ${message.substring(8)}`, 'client-message');
+      } else if (message.startsWith("file:")) {
+        console.log('Server received file message'); // Debug log
+        try {
+          const fileData = JSON.parse(message.substring(5));
+          console.log('Server parsed file data:', fileData); // Debug log
+          displayFileMessage(fileData);
+        } catch (e) {
+          console.error('Server error parsing file data:', e); // Debug log
+          displayMessage('Received invalid file data', 'error-message');
+        }
       }
     };
 
-    // Press "Enter" to send a message
-    document.getElementById('serverMessageInput').addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') sendServerMessage();
-    });
-  </script>
+    socket.onclose = function() {
+      isConnected = false;
+      updateConnectionStatus(false);
+      enableButtons(false);
+      // Show reconnecting status
+      const statusElement = document.getElementById('connectionStatus');
+      statusElement.textContent = 'Reconnecting...';
+      statusElement.style.display = 'block';
+      // Attempt to reconnect after 3 seconds
+      setTimeout(connectWebSocket, 3000);
+    };
+
+    socket.onerror = function(error) {
+      console.error('WebSocket error:', error);
+      const statusElement = document.getElementById('connectionStatus');
+      statusElement.textContent = 'Connection Error';
+      statusElement.style.display = 'block';
+    };
+  }
+
+  function updateConnectionStatus(connected) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (connected) {
+      statusElement.style.display = 'none'; // Hide when connected
+    } else {
+      statusElement.style.display = 'block'; // Show when disconnected
+      statusElement.textContent = 'Disconnected';
+      statusElement.className = 'connection-status disconnected';
+    }
+  }
+
+  function enableButtons(enabled) {
+    document.getElementById('sendButton').disabled = !enabled;
+    document.getElementById('sendFileButton').disabled = !enabled;
+  }
+
+  function sendServerMessage() {
+    const input = document.getElementById('serverMessageInput');
+    const message = input.value.trim();
+    if (message && isConnected) {
+      socket.send(message);
+      displayMessage(`Server: ${message}`, 'server-message');
+      input.value = '';
+    }
+  }
+
+  function sendFile() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    
+    if (file && isConnected) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        displayMessage('File too large. Maximum size is 5MB.', 'error-message');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: event.target.result
+        };
+        socket.send(`file:${JSON.stringify(fileData)}`);
+        displayMessage(`File sent: ${file.name} (${formatFileSize(file.size)})`, 'file-message');
+        fileInput.value = ''; // Clear file input
+      };
+      reader.readAsDataURL(file);
+    } else if (!file) {
+      displayMessage('Please select a file first', 'error-message');
+    }
+  }
+
+  function displayMessage(text, className) {
+    const messages = document.getElementById('messages');
+    const msgElement = document.createElement('div');
+    msgElement.classList.add('message', className);
+    msgElement.textContent = text;
+    messages.appendChild(msgElement);
+    messages.scrollTop = messages.scrollHeight; // Auto-scroll to bottom
+  }
+
+  function displayFileMessage(fileData) {
+    const messages = document.getElementById('messages');
+    const msgElement = document.createElement('div');
+    msgElement.classList.add('message', 'file-message');
+    
+    const fileInfo = document.createElement('div');
+    fileInfo.textContent = `File received: ${fileData.name} (${formatFileSize(fileData.size)})`;
+    
+    const downloadLink = document.createElement('a');
+    downloadLink.href = fileData.data;
+    downloadLink.download = fileData.name;
+    downloadLink.textContent = 'Download';
+    downloadLink.style.color = 'white';
+    downloadLink.style.textDecoration = 'underline';
+    downloadLink.style.marginLeft = '10px';
+    
+    msgElement.appendChild(fileInfo);
+    msgElement.appendChild(downloadLink);
+    messages.appendChild(msgElement);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // Press "Enter" to send a message
+  document.getElementById('serverMessageInput').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter' && isConnected) {
+      sendServerMessage();
+    }
+  });
+
+  // Initialize connection
+  connectWebSocket();
+</script>
+
 </body>
 </html>
