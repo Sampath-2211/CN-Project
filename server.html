@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server</title>
+  <style>
+    body {
+      background-image: url("CN5.webp");
+      background-size: cover;
+      background-position: center;
+      font-family: 'Times New Roman', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 30px;
+      width: 700px;
+    }
+    .message { padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+    .server-message { background-color: #007bff; color: white; }
+    .client-message { background-color: #f1f1f1; color: black; }
+    #serverMessageInput {
+      width: calc(100% - 30px);
+      padding: 10px;
+      border: 2px solid #007bff;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <h2>Server Chat</h2>
+    <div id="messages"></div>
+    <input type="text" id="serverMessageInput" placeholder="Type message...">
+    <button onclick="sendServerMessage()">Send</button>
+    <input type="file" id="fileInput">
+  </div>
+
+  <script>
+    const socket = new WebSocket('ws://localhost:4000');
+
+    function sendServerMessage() {
+      const input = document.getElementById('serverMessageInput');
+      const message = input.value.trim();
+      if (message) {
+        socket.send(message);
+        displayMessage(`Server: ${message}`, 'server-message');
+        input.value = '';
+      }
+    }
+
+    function displayMessage(text, className) {
+      const messages = document.getElementById('messages');
+      const msgElement = document.createElement('div');
+      msgElement.classList.add('message', className);
+      msgElement.textContent = text;
+      messages.appendChild(msgElement);
+    }
+
+    // Handle incoming messages
+    socket.onmessage = function(event) {
+      const message = event.data;
+      if (message.startsWith("message:")) {
+        displayMessage(`Client: ${message.substring(8)}`, 'client-message');
+      }
+    };
+
+    // Press "Enter" to send a message
+    document.getElementById('serverMessageInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') sendServerMessage();
+    });
+  </script>
+</body>
+</html>
