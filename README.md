@@ -217,5 +217,8 @@ Contributions welcome! Areas for improvement:
 - Voice/video chat integration
 
 Feel free to submit issues, fork the repository, and create pull requests.
+
+Here is the Server.js
 <img width="1440" height="774" alt="Screenshot 2025-07-25 at 1 33 51 PM" src="https://github.com/user-attachments/assets/8b88f965-75f7-4d85-bb64-5be72414464d" />
+Here is the Client.js
 <img width="1440" height="772" alt="Screenshot 2025-07-25 at 1 33 43 PM" src="https://github.com/user-attachments/assets/df7d767d-b740-4f86-859d-20cb322c9b44" />
