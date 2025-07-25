@@ -1,222 +1,128 @@
-# WebSocket Chat Application
+# 🚀 WebSocket Chat Application
 
-A real-time chat application with file sharing capabilities built using WebSockets. Features separate server and client interfaces with automatic reconnection and modern UI design.
+A real-time chat app with file sharing, modern UI, and auto-reconnection — built using WebSockets.
+
+---
 
 ## ✨ Features
 
-- **Real-time messaging** between server and client interfaces
-- **File sharing** with download capability (up to 5MB per file)
-- **Dual interface design** with dedicated server and client views
-- **Auto-reconnection** when connection is lost
-- **Connection status indicators** (only shown when disconnected)
-- **Modern glassmorphism UI** with background styling
-- **Responsive design** with hover effects and animations
-- **Keyboard shortcuts** (Enter to send messages)
-- **File size validation** and formatting
-- **Auto-scrolling** message areas
-- **Multiple client support**
+- Real-time messaging (text + files)
+- File sharing (up to 5MB)
+- Auto-reconnection with status indicator
+- Dual UI: `server.html` (send files) & `client.html`
+- Glassmorphism design & responsive layout
+- Keyboard shortcuts & hover animations
+- Auto-scroll, file validation, multi-client support
+
+---
 
 ## 📁 Project Structure
 
 ```
 CN Project/
-├── server.js          # WebSocket server with file handling
-├── client.html        # Client-side chat interface
-├── server.html        # Server-side chat interface with file upload
-├── package.json       # Project dependencies
-├── package-lock.json  # Dependency lock file
-├── test.txt           # Sample text file
-├── CN5.webp          # Background image (required)
-└── README.md          # Project documentation
+├── server.js          # WebSocket backend
+├── client.html        # Client chat interface
+├── server.html        # Server interface with file upload
+├── package.json
+├── CN5.webp           # Background image
+└── README.md
 ```
 
-## 🔧 Prerequisites
+---
 
-- **Node.js** (version 10.0.0 or higher)
-- **npm** (Node Package Manager)
-- A modern web browser with WebSocket support
-- **CN5.webp** background image file
+## 🛠 Requirements
 
-## 🚀 Installation
+- Node.js (v10+)
+- npm
+- Modern browser with WebSocket & FileReader API support
 
-1. **Download/Clone** the project files to your local machine
+---
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
+## 🚀 Setup & Usage
 
-3. **Add background image**:
-   - Place a file named `CN5.webp` in the project root directory
-   - This serves as the background image for both interfaces
+### 1. Install dependencies
 
-## 📖 Usage
+```bash
+npm install
+```
 
-### Starting the Server
+### 2. Start the WebSocket server
 
-1. **Start the WebSocket server**:
-   ```bash
-   node server.js
-   ```
+```bash
+node server.js
+```
 
-2. **Verify server is running**:
-   ```
-   WebSocket server started on port 4000
-   New client connected (when clients connect)
-   ```
+You should see:
 
-### Opening the Chat Interfaces
+```
+WebSocket server started on port 4000
+```
 
-1. **Server Interface**:
-   - Open `server.html` in your web browser
-   - Features: Send messages and files to all connected clients
-   - Has file upload capability with size validation
+### 3. Add background image
 
-2. **Client Interface**:
-   - Open `client.html` in your web browser
-   - Can open multiple instances for multiple users
-   - Receives messages and files from server and other clients
+- Place `CN5.webp` in the project root directory.
 
-### Using the Application
+### 4. Open the chat interfaces
 
-#### **Sending Text Messages**
-- Type your message in the input field
-- Click "Send" or press Enter
-- Messages appear instantly in all connected interfaces
+- **Server Interface**: `server.html`
+  - Can send messages and upload files (max 5MB)
+- **Client Interface**: `client.html`
+  - Can send and receive messages and download files
 
-#### **Sending Files** (Server Interface Only)
-- Click "Choose File" to select a file (max 5MB)
-- Click "Send File"
-- File will be broadcast to all connected clients
-- Clients can download the file using the provided download link
+---
 
-#### **Connection Status**
-- **Green "Connected"**: Hidden when connection is active
-- **Red status bar**: Only appears when disconnected/reconnecting
-- **Auto-reconnection**: Attempts to reconnect every 3 seconds
+## 💡 How It Works
 
-## 🔧 How It Works
+### server.js
 
-### **Server Architecture (server.js)**
-- Creates WebSocket server on port 4000
-- Handles multiple simultaneous connections
-- Routes messages between clients (excludes sender)
-- Supports both text and file message protocols
-- Includes connection logging and error handling
+- WebSocket server on port **4000**
+- Routes messages and files to all connected clients (excluding sender)
 
-### **Message Protocol**
-- **Text messages**: Prefixed with `message:` when broadcast
-- **File messages**: Prefixed with `file:` containing JSON data
-- **File format**: `{name, type, size, data}` as base64 encoded string
+### Message Protocol
 
-### **Client Interface (client.html)**
-- Connects to WebSocket server
-- Displays messages with color coding
-- Handles file downloads via data URLs
-- Auto-reconnection on connection loss
+- Text messages: `message:<text>`
+- File messages: `file:<JSON>`  
+  Format:  
+  ```json
+  {
+    "name": "filename.ext",
+    "type": "mime/type",
+    "size": 123456,
+    "data": "base64_encoded_content"
+  }
+  ```
 
-### **Server Interface (server.html)**
-- Same as client interface plus file upload
-- File validation (type, size)
-- FileReader API for base64 encoding
-- Progress indication and error handling
+### Interfaces
 
-## 🎨 UI Features
+- `client.html`: Basic chat client
+- `server.html`: Same features + file upload via FileReader API
 
-### **Design Elements**
-- **Background**: Custom image (CN5.webp) with cover scaling
-- **Glassmorphism**: Semi-transparent containers with blur effects
-- **Color Coding**: 
-  - Blue messages: Server/other users
-  - Light gray messages: Your own messages
-  - Green messages: File transfers
-  - Red messages: Errors/status
-- **Responsive Layout**: Works on various screen sizes
-- **Animations**: Smooth hover effects and transitions
+---
 
-### **User Experience**
-- **Smart UI**: Connection status only shown when needed
-- **Auto-scroll**: Messages automatically scroll to bottom
-- **Keyboard Support**: Enter key sends messages
-- **File Validation**: Size limits and error feedback
-- **Download Links**: Direct file downloads from chat
+## 🎨 UI Design
 
-## 🔧 Technical Specifications
+- **Background**: Uses `CN5.webp` with cover scaling
+- **Glassmorphism**: Blurred, semi-transparent chat container
+- **Color Coding**:
+  - Blue: Messages from others
+  - Gray: Your messages
+  - Green: Files
+- **Responsive Layout**: Mobile-friendly
+- **Animations**: Hover effects and transitions
+- **Smart Reconnection**: Only shows red bar when disconnected
+- **Keyboard Support**: Press `Enter` to send
 
-### **Dependencies**
-- **ws (^8.18.0)**: WebSocket implementation for Node.js
-- **No client-side libraries**: Pure vanilla JavaScript
+---
 
-### **Browser Requirements**
-- WebSocket API support
-- FileReader API (for file uploads)
-- ES6+ JavaScript features
-- CSS3 with flexbox support
+## ⚙️ Technical Details
 
-### **File Handling**
-- **Maximum file size**: 5MB per file
-- **Supported formats**: All file types
-- **Encoding**: Base64 data URLs
-- **Transfer method**: JSON over WebSocket
+- **Backend**: Node.js + `ws` (v8.18.0)
+- **Frontend**: Pure Vanilla JavaScript (no frameworks)
+- **File Limit**: Max 5MB, any format
+- **Encoding**: Files are base64-encoded and sent as JSON over WebSocket
+- **In-memory Transfer**: No file persistence (everything happens in memory)
 
-## 🐛 Troubleshooting
-
-### **Common Issues & Solutions**
-
-**❌ "Connection failed" or red status bar**
-- Ensure server is running: `node server.js`
-- Check port 4000 isn't blocked by firewall
-- Verify WebSocket URL matches server location
-
-**❌ Background image not showing**
-- Confirm `CN5.webp` exists in project root
-- Check file permissions and format
-- Try refreshing the browser
-
-**❌ File upload not working**
-- Verify file size is under 5MB
-- Check browser console for JavaScript errors
-- Ensure server.js has been updated with latest code
-
-**❌ Download links not appearing**
-- Check browser console for file parsing errors
-- Verify all interfaces are using the updated HTML code
-- Confirm server is broadcasting file messages correctly
-
-### **Debug Mode**
-The application includes console logging:
-- **Server console**: Shows connection events and message routing
-- **Browser console**: Shows WebSocket events and file processing
-- **Access**: Open browser Developer Tools (F12) → Console tab
-
-### **Network Deployment**
-For use across different machines:
-1. Replace `localhost` with server IP address in HTML files
-2. Ensure port 4000 is accessible across network
-3. Update firewall rules if necessary
-
-## 🚦 Development Notes
-
-- **Security**: No authentication implemented - suitable for trusted networks
-- **Scalability**: Handles multiple clients, but no persistence
-- **File Storage**: Files are transmitted in memory only
-- **Error Recovery**: Auto-reconnection with exponential backoff
-- **Performance**: Optimized for small to medium file transfers
-
-## 📝 License
-
-This project is open source and available under standard terms.
-
-## 🤝 Contributing
-
-Contributions welcome! Areas for improvement:
-- User authentication
-- Message persistence
-- Larger file support
-- Mobile optimization
-- Voice/video chat integration
-
-Feel free to submit issues, fork the repository, and create pull requests.
+---
 
 Here is the Server.js
 <img width="1440" height="774" alt="Screenshot 2025-07-25 at 1 33 51 PM" src="https://github.com/user-attachments/assets/8b88f965-75f7-4d85-bb64-5be72414464d" />
